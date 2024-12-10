@@ -1,177 +1,93 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2024 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 
-/* USER CODE END Includes */
+// Prototypes
+void DMA_Init();
+void USART_Init();
+void DMA_to_USART(const char*);
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
+int main() {
 
-/* USER CODE END PTD */
+    USART_Init();
+    DMA_Init();
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
+    for(volatile int i = 0; i < 60000; i++);
 
-/* USER CODE END PD */
+    DMA_to_USART("=== Starting Program ===\r\n");  // Clear marker
+    while(DMA1_Stream6->CR & (1 << 0));            // Wait for complete
 
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
+    DMA_to_USART("Attempt #15\r\n");
+    while(DMA1_Stream6->CR & (1 << 0));            // Wait for complete
 
-/* USER CODE END PM */
+    DMA_to_USART("Message 1\r\n");
+    while(DMA1_Stream6->CR & (1 << 0));            // Wait for complete
 
-/* Private variables ---------------------------------------------------------*/
+    DMA_to_USART("Message 2\r\n");
+    while(DMA1_Stream6->CR & (1 << 0));            // Wait for complete
 
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
-
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+    while(1) {
+    }
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_Config(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+// Initialize DMA
+void DMA_Init() {
+	RCC -> AHB1ENR |= (1 << 21);
 
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+	DMA1_Stream6 -> CR &= ~(1 << 0);
+	while(DMA1_Stream6 -> CR & (1 << 0));
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	DMA1_Stream6 -> CR &= ~(7 << 25);
+	DMA1_Stream6 -> CR |= (4 << 25);
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	DMA1_Stream6 -> CR |= (1 << 6);
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
+	DMA1_Stream6 -> CR |= (1 << 10);
 }
 
-/* USER CODE BEGIN 4 */
+// Initialize USART for basic debugging
+void USART_Init() {
+	RCC -> APB1ENR |= (1 << 17);
+	RCC -> AHB1ENR |= (1 << 0);
 
-/* USER CODE END 4 */
+	GPIOA -> MODER &= ~((3 << (2 * 3)) | (3 << (3 * 3)));
+	GPIOA -> MODER |= (2 << (2 * 2)) | (2 << (2 * 3));
 
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
-void Error_Handler(void)
-{
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+	GPIOA -> AFR[0] &= ~((0xF << (4 * 2)) | (0xF << (4 * 3)));
+	GPIOA -> AFR[0] |= (7 << (4 * 2)) | (7 << (4 * 3));
+
+	USART2 -> BRR = 0x0683;
+	USART2 -> CR1 |= (1 << 3);
+	USART2 -> CR3 |= (1 << 7);
+
+	volatile uint8_t temp = USART2->DR;
+	temp = USART2->SR;
+	(void)temp;
+
+	USART2 -> CR1 |= (1 << 13);
 }
 
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
+// Initialize ADC
+
+// Initialize I2C for LCD
+
+// Initialize LCD
+
+// DMA buffer print to LCD
+void DMA_to_USART(const char* str) {
+    while(DMA1_Stream6->CR & (1 << 0));
+
+    if(DMA1->HISR & (1 << 21)) {
+        DMA1->HIFCR |= (1 << 21);
+    }
+
+	uint16_t len = strlen(str);
+
+	DMA1_Stream6 -> NDTR = len;
+	DMA1_Stream6 -> PAR = (uint32_t)&USART2 -> DR;
+	DMA1_Stream6 -> M0AR = (uint32_t)str;
+
+	DMA1_Stream6 -> CR |= (1 << 0);
+
+	while(DMA1_Stream6->CR & (1 << 0));
 }
-#endif /* USE_FULL_ASSERT */
